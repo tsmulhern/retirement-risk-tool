@@ -1,581 +1,592 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RetireSecure™ - Retirement Portfolio Risk Analyzer</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <!-- Welcome Screen -->
-        <section id="welcome-screen" class="screen active">
-            <div class="welcome-content">
-                <i class="fas fa-chart-line welcome-icon"></i>
-                <h1>RetireSecure™</h1>
-                <h2>Retirement Portfolio Risk Analyzer</h2>
-                <p class="subtitle">Comprehensive Risk Assessment Across 6 Critical Categories</p>
-                
-                <div class="risk-categories">
-                    <div class="category-badge"><i class="fas fa-dollar-sign"></i> Tax Risk</div>
-                    <div class="category-badge"><i class="fas fa-chart-area"></i> Market Risk</div>
-                    <div class="category-badge"><i class="fas fa-fire"></i> Inflation Risk</div>
-                    <div class="category-badge"><i class="fas fa-hourglass-half"></i> Longevity Risk</div>
-                    <div class="category-badge"><i class="fas fa-heartbeat"></i> Long-Term Care</div>
-                    <div class="category-badge"><i class="fas fa-exclamation-triangle"></i> Early Retirement</div>
-                </div>
+/**
+ * RetireSecure™ Risk Scorer
+ * Calculates risk scores across six retirement risk categories
+ */
 
-                <button class="btn-primary" onclick="startAssessment()">Start Assessment</button>
-                
-                <p class="disclaimer-small">All calculations are performed locally in your browser. No data is transmitted or stored.</p>
-            </div>
-        </section>
+const RiskScorer = {
+    /**
+     * Calculate all six risk category scores
+     * @param {Object} data - Combined user input and PDF data
+     * @returns {Object} - Scores and recommendations for all categories
+     */
+    calculateAllScores(data) {
+        return {
+            tax: this.calculateTaxRisk(data),
+            market: this.calculateMarketRisk(data),
+            inflation: this.calculateInflationRisk(data),
+            longevity: this.calculateLongevityRisk(data),
+            ltc: this.calculateLTCRisk(data),
+            earlyRetirement: this.calculateEarlyRetirementRisk(data)
+        };
+    },
 
-        <!-- Assessment Form -->
-        <section id="assessment-form" class="screen">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
+    /**
+     * Calculate Tax Risk Score (1-10 scale, 1 = extreme risk, 10 = minimal risk)
+     */
+    calculateTaxRisk(data) {
+        let score = 5; // Start at middle
+        const reasons = [];
+        const recommendations = [];
+
+        // Check tax diversification
+        const totalTaxDeferred = (data.tax_preTaxBalance || 0);
+        const rothBalance = (data.tax_rothBalance || 0);
+        const taxableBalance = (data.tax_taxableBalance || 0);
+        const totalAssets = totalTaxDeferred + rothBalance + taxableBalance;
+
+        if (totalAssets > 0) {
+            const preTaxPercent = (totalTaxDeferred / totalAssets) * 100;
             
-            <form id="risk-form">
-                <!-- Personal Information -->
-                <div class="form-section active" data-section="1">
-                    <h2><i class="fas fa-user"></i> Personal Information</h2>
-                    
-                    <div class="form-group">
-                        <label for="name">Full Name</label>
-                        <input type="text" id="name" name="name" required>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="age">Current Age</label>
-                            <input type="number" id="age" name="age" min="18" max="100" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="retirement-age">Planned Retirement Age</label>
-                            <input type="number" id="retirement-age" name="retirement-age" min="50" max="80" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="annual-income">Current Annual Income</label>
-                        <input type="number" id="annual-income" name="annual-income" min="0" step="1000" required>
-                        <small>Enter your gross annual household income</small>
-                    </div>
-                    
-                    <div class="form-navigation">
-                        <button type="button" class="btn-secondary" onclick="nextSection()" style="margin-left: auto;">Next <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
+            if (preTaxPercent > 90) {
+                score -= 3;
+                reasons.push('Over 90% of assets in pre-tax accounts');
+                recommendations.push({
+                    title: 'Begin Roth Conversions Immediately',
+                    description: 'Convert a portion of pre-tax assets to Roth IRA annually to reduce future RMD burden and create tax-free income streams in retirement.'
+                });
+            } else if (preTaxPercent > 75) {
+                score -= 2;
+                reasons.push('Over 75% of assets in pre-tax accounts');
+            } else if (preTaxPercent < 50) {
+                score += 2;
+                reasons.push('Good tax diversification with less than 50% in pre-tax accounts');
+            }
 
-                <!-- Tax Risk Section -->
-                <div class="form-section" data-section="2">
-                    <h2><i class="fas fa-dollar-sign"></i> Tax Risk Assessment</h2>
-                    <p class="section-description">Understanding your tax diversification and future tax exposure</p>
-                    
-                    <div class="form-group">
-                        <label for="tax-deferred-pct">% of retirement assets in tax-deferred accounts (Traditional 401k/IRA)</label>
-                        <input type="number" id="tax-deferred-pct" name="tax-deferred-pct" min="0" max="100" step="1" required>
-                        <small>These accounts are taxed as ordinary income when withdrawn</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="roth-pct">% of retirement assets in tax-free accounts (Roth 401k/IRA)</label>
-                        <input type="number" id="roth-pct" name="roth-pct" min="0" max="100" step="1" required>
-                        <small>Qualified Roth withdrawals are completely tax-free</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="taxable-pct">% of retirement assets in taxable brokerage accounts</label>
-                        <input type="number" id="taxable-pct" name="taxable-pct" min="0" max="100" step="1" required>
-                        <small>These provide flexibility and favorable capital gains treatment</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="retirement-income">Expected annual retirement income (from all sources)</label>
-                        <input type="number" id="retirement-income" name="retirement-income" min="0" step="1000" required>
-                        <small>Include pension, Social Security, investment income, rental income, etc.</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="state-tax">Does your state tax retirement income?</label>
-                        <select id="state-tax" name="state-tax" required>
-                            <option value="">-- Select --</option>
-                            <option value="no">No (or minimal)</option>
-                            <option value="partial">Partially (some exemptions)</option>
-                            <option value="yes">Yes (fully taxed)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="social-security">Do you expect to receive Social Security benefits?</label>
-                        <select id="social-security" name="social-security" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes">Yes</option>
-                            <option value="no">No</option>
-                            <option value="unknown">Unknown</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="pension">Do you have a pension?</label>
-                        <select id="pension" name="pension" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes">Yes</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="roth-conversion">Have you done Roth conversion planning?</label>
-                        <select id="roth-conversion" name="roth-conversion" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes">Yes, active plan</option>
-                            <option value="somewhat">Somewhat/Considering</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-navigation">
-                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
+            const rothPercent = (rothBalance / totalAssets) * 100;
+            if (rothPercent > 30) {
+                score += 2;
+                reasons.push('Strong Roth IRA presence (>30% of assets)');
+            } else if (rothPercent < 10) {
+                score -= 1;
+                recommendations.push({
+                    title: 'Open and Fund Roth IRAs',
+                    description: 'Establish Roth IRA accounts for both spouses and contribute the maximum annually ($7,000 per person in 2024, or $8,000 if age 50+).'
+                });
+            }
 
-                <!-- Market/Sequence Risk Section -->
-                <div class="form-section" data-section="3">
-                    <h2><i class="fas fa-chart-area"></i> Market / Sequence of Returns Risk</h2>
-                    <p class="section-description">Assessing your vulnerability to market downturns</p>
-                    
-                    <div class="form-group">
-                        <label for="stocks-pct">% of portfolio in stocks/equities</label>
-                        <input type="number" id="stocks-pct" name="stocks-pct" min="0" max="100" step="1" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="bonds-pct">% of portfolio in bonds/fixed income</label>
-                        <input type="number" id="bonds-pct" name="bonds-pct" min="0" max="100" step="1" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="cash-pct">% of portfolio in cash/money market</label>
-                        <input type="number" id="cash-pct" name="cash-pct" min="0" max="100" step="1" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="withdrawal-rate">Expected annual withdrawal rate in retirement (%)</label>
-                        <input type="number" id="withdrawal-rate" name="withdrawal-rate" min="0" max="20" step="0.1" required>
-                        <small>Typical sustainable rate is 3-4% per year</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="guaranteed-income-pct">% of retirement expenses covered by guaranteed income (pension, SS, annuities)</label>
-                        <input type="number" id="guaranteed-income-pct" name="guaranteed-income-pct" min="0" max="100" step="1" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="cash-buffer">Do you have a cash buffer (2-3 years of expenses)?</label>
-                        <select id="cash-buffer" name="cash-buffer" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes-3">Yes, 3+ years</option>
-                            <option value="yes-2">Yes, 2 years</option>
-                            <option value="yes-1">Yes, 1 year</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="stress-tested">Have you stress-tested your portfolio for market downturns?</label>
-                        <select id="stress-tested" name="stress-tested" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes">Yes, with advisor</option>
-                            <option value="somewhat">Somewhat</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-navigation">
-                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
+            if (taxableBalance > 0) {
+                score += 1;
+                reasons.push('Have taxable brokerage accounts for flexibility');
+            } else {
+                recommendations.push({
+                    title: 'Establish Taxable Brokerage Account',
+                    description: 'Open a taxable investment account to provide tax flexibility and avoid RMD requirements on these funds.'
+                });
+            }
+        }
 
-                <!-- Inflation Risk Section -->
-                <div class="form-section" data-section="4">
-                    <h2><i class="fas fa-fire"></i> Inflation Risk Assessment</h2>
-                    <p class="section-description">Evaluating your protection against rising costs</p>
-                    
-                    <div class="form-group">
-                        <label for="fixed-income-sources-pct">% of retirement income from fixed sources (pension without COLA, fixed annuities)</label>
-                        <input type="number" id="fixed-income-sources-pct" name="fixed-income-sources-pct" min="0" max="100" step="1" required>
-                        <small>Fixed income loses purchasing power over time</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="ss-cola">Does your Social Security or pension have COLA (cost of living adjustment)?</label>
-                        <select id="ss-cola" name="ss-cola" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes-both">Yes, both have COLA</option>
-                            <option value="yes-one">Yes, one has COLA</option>
-                            <option value="no">No COLA</option>
-                            <option value="no-ss-pension">No SS or pension</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="growth-assets-pct">% of portfolio in growth assets (stocks, real estate, commodities)</label>
-                        <input type="number" id="growth-assets-pct" name="growth-assets-pct" min="0" max="100" step="1" required>
-                        <small>Growth assets historically outpace inflation</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="real-estate">Do you own real estate (beyond primary home)?</label>
-                        <select id="real-estate" name="real-estate" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes-income">Yes, rental income property</option>
-                            <option value="yes-no-income">Yes, but no rental income</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="inflation-plan">Do you have a specific plan to address inflation in retirement?</label>
-                        <select id="inflation-plan" name="inflation-plan" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes">Yes, detailed plan</option>
-                            <option value="somewhat">Somewhat considered</option>
-                            <option value="no">No specific plan</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-navigation">
-                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
+        // Check state tax situation
+        const highTaxStates = ['CA', 'NY', 'NJ', 'OR', 'MN', 'DC', 'VT', 'HI', 'MA', 'CT'];
+        if (data.tax_state && highTaxStates.includes(data.tax_state)) {
+            score -= 1;
+            reasons.push(`Living in high-tax state (${data.tax_state})`);
+            recommendations.push({
+                title: 'Consider State Tax Planning',
+                description: 'Review state-specific retirement income tax rules. Consider establishing residency in a tax-friendly state before retirement if feasible.'
+            });
+        }
 
-                <!-- Longevity Risk Section -->
-                <div class="form-section" data-section="5">
-                    <h2><i class="fas fa-hourglass-half"></i> Longevity Risk Assessment</h2>
-                    <p class="section-description">Ensuring your money lasts as long as you do</p>
-                    
-                    <div class="form-group">
-                        <label for="health-status">Overall health status</label>
-                        <select id="health-status" name="health-status" required>
-                            <option value="">-- Select --</option>
-                            <option value="excellent">Excellent</option>
-                            <option value="good">Good</option>
-                            <option value="fair">Fair</option>
-                            <option value="poor">Poor</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="family-longevity">Family history of longevity</label>
-                        <select id="family-longevity" name="family-longevity" required>
-                            <option value="">-- Select --</option>
-                            <option value="long">Above average (many relatives lived 85+)</option>
-                            <option value="average">Average (most lived 70-85)</option>
-                            <option value="short">Below average (most lived under 70)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="portfolio-withdrawal-rate">Projected portfolio withdrawal rate (%)</label>
-                        <input type="number" id="portfolio-withdrawal-rate" name="portfolio-withdrawal-rate" min="0" max="20" step="0.1" required>
-                        <small>Higher rates increase risk of running out of money</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="lifetime-income-pct">% of expenses covered by guaranteed lifetime income (SS, pension, annuities)</label>
-                        <input type="number" id="lifetime-income-pct" name="lifetime-income-pct" min="0" max="100" step="1" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="income-calculator">Have you used a retirement income calculator to project sustainability?</label>
-                        <select id="income-calculator" name="income-calculator" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes">Yes, with financial advisor</option>
-                            <option value="somewhat">Yes, used online tools</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-navigation">
-                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
+        // IUL recommendation for high earners
+        const hasHighIncome = (data.combinedIncome || 0) > 200000;
+        if (hasHighIncome && rothBalance < 100000) {
+            recommendations.push({
+                title: 'Consider IUL for Tax-Free Savings – No Income or Contribution Limits',
+                description: 'An Indexed Universal Life (IUL) policy offers tax-deferred cash value growth with indexed returns and a 0% floor. Policy loans provide tax-free retirement income with NO income limits (unlike Roth IRA) and NO contribution caps (unlike 401(k)/IRA). IUL also includes living benefit riders for tax-free access during qualifying health events.'
+            });
+        }
 
-                <!-- Long-Term Care Risk Section -->
-                <div class="form-section" data-section="6">
-                    <h2><i class="fas fa-heartbeat"></i> Long-Term Care Risk</h2>
-                    <p class="section-description">Planning for potential healthcare needs</p>
-                    
-                    <div class="form-group">
-                        <label for="ltc-insurance">Do you have long-term care insurance?</label>
-                        <select id="ltc-insurance" name="ltc-insurance" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes-comprehensive">Yes, comprehensive coverage</option>
-                            <option value="yes-basic">Yes, basic coverage</option>
-                            <option value="hybrid">Hybrid life/LTC policy</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="net-worth">Estimated net worth (excluding primary residence)</label>
-                        <select id="net-worth" name="net-worth" required>
-                            <option value="">-- Select --</option>
-                            <option value="under-250k">Under $250,000</option>
-                            <option value="250k-500k">$250,000 - $500,000</option>
-                            <option value="500k-1m">$500,000 - $1,000,000</option>
-                            <option value="1m-2m">$1,000,000 - $2,000,000</option>
-                            <option value="over-2m">Over $2,000,000</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="ltc-health">Current health relative to LTC risk</label>
-                        <select id="ltc-health" name="ltc-health" required>
-                            <option value="">-- Select --</option>
-                            <option value="excellent">Excellent health, active lifestyle</option>
-                            <option value="good">Good health, some minor issues</option>
-                            <option value="fair">Fair health, chronic conditions</option>
-                            <option value="poor">Poor health, mobility issues</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="family-support">Family/support system for potential care</label>
-                        <select id="family-support" name="family-support" required>
-                            <option value="">-- Select --</option>
-                            <option value="strong">Strong (spouse/children nearby)</option>
-                            <option value="moderate">Moderate (some family available)</option>
-                            <option value="limited">Limited (far away or unable)</option>
-                            <option value="none">None (no family support)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="ltc-plan">Do you have a written long-term care plan?</label>
-                        <select id="ltc-plan" name="ltc-plan" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes">Yes, documented plan</option>
-                            <option value="discussed">Discussed with family</option>
-                            <option value="no">No plan yet</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-navigation">
-                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
+        // Ensure score stays in 1-10 range
+        score = Math.max(1, Math.min(10, Math.round(score * 10) / 10));
 
-                <!-- Involuntary Early Retirement Risk Section -->
-                <div class="form-section" data-section="7">
-                    <h2><i class="fas fa-exclamation-triangle"></i> Involuntary Early Retirement Risk</h2>
-                    <p class="section-description">Assessing your preparedness for unexpected job loss</p>
-                    
-                    <div class="form-group">
-                        <label for="job-stability">Job/income stability</label>
-                        <select id="job-stability" name="job-stability" required>
-                            <option value="">-- Select --</option>
-                            <option value="very-stable">Very stable (government, tenured, etc.)</option>
-                            <option value="stable">Stable (established career/company)</option>
-                            <option value="moderate">Moderate (some uncertainty)</option>
-                            <option value="unstable">Unstable (volatile industry/position)</option>
-                            <option value="retired">Already retired</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="years-to-retirement">Years until planned retirement</label>
-                        <input type="number" id="years-to-retirement" name="years-to-retirement" min="0" max="50" step="1" required>
-                        <small>This field auto-calculates from your age inputs</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="emergency-fund">Emergency fund (months of expenses)</label>
-                        <select id="emergency-fund" name="emergency-fund" required>
-                            <option value="">-- Select --</option>
-                            <option value="12-plus">12+ months</option>
-                            <option value="6-12">6-12 months</option>
-                            <option value="3-6">3-6 months</option>
-                            <option value="under-3">Under 3 months</option>
-                            <option value="none">No emergency fund</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="disability-insurance">Do you have disability insurance?</label>
-                        <select id="disability-insurance" name="disability-insurance" required>
-                            <option value="">-- Select --</option>
-                            <option value="yes-comprehensive">Yes, comprehensive coverage (60%+ income)</option>
-                            <option value="yes-basic">Yes, basic coverage (under 60% income)</option>
-                            <option value="employer-only">Employer coverage only</option>
-                            <option value="no">No disability insurance</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="early-retirement-health">Health status relative to job demands</label>
-                        <select id="early-retirement-health" name="early-retirement-health" required>
-                            <option value="">-- Select --</option>
-                            <option value="excellent">Excellent, no concerns</option>
-                            <option value="good">Good, can continue working</option>
-                            <option value="fair">Fair, job is challenging</option>
-                            <option value="poor">Poor, job is very difficult</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="ready-today">If forced to retire today, how prepared would you be?</label>
-                        <select id="ready-today" name="ready-today" required>
-                            <option value="">-- Select --</option>
-                            <option value="ready">Fully prepared, could retire comfortably</option>
-                            <option value="mostly">Mostly prepared, could manage</option>
-                            <option value="somewhat">Somewhat prepared, would struggle</option>
-                            <option value="not">Not prepared at all</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-navigation">
-                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-primary" onclick="calculateResults()">Calculate Risk Scores <i class="fas fa-calculator"></i></button>
-                    </div>
-                </div>
-            </form>
-        </section>
+        return {
+            score,
+            level: this.getRiskLevel(score),
+            reasons,
+            recommendations: score <= 6 ? recommendations : []
+        };
+    },
 
-        <!-- Results Screen -->
-        <section id="results-screen" class="screen">
-            <div class="results-header">
-                <h1><i class="fas fa-check-circle"></i> Your Retirement Risk Analysis</h1>
-                <p class="results-name" id="results-name"></p>
-            </div>
+    /**
+     * Calculate Market / Sequence of Returns Risk
+     */
+    calculateMarketRisk(data) {
+        let score = 7; // Start optimistic
+        const reasons = [];
+        const recommendations = [];
 
-            <div class="overall-score-card">
-                <h2>Overall Risk Score</h2>
-                <div class="overall-score" id="overall-score">--</div>
-                <p class="overall-description" id="overall-description"></p>
-            </div>
+        // Check portfolio withdrawal rate
+        const portfolioBalance = (data.market_portfolioBalance || 0);
+        const annualIncome = (data.market_annualIncome || 0);
+        const pensionIncome = (data.market_pensionIncome || 0);
+        const ssIncome = (data.market_ssIncome || 0);
+        
+        const guaranteedIncome = pensionIncome + ssIncome;
+        const portfolioWithdrawal = Math.max(0, annualIncome - guaranteedIncome);
+        
+        if (portfolioBalance > 0) {
+            const withdrawalRate = (portfolioWithdrawal / portfolioBalance) * 100;
+            
+            if (withdrawalRate > 6) {
+                score -= 3;
+                reasons.push(`High withdrawal rate: ${withdrawalRate.toFixed(1)}%`);
+                recommendations.push({
+                    title: 'Reduce Portfolio Withdrawal Rate',
+                    description: 'Your withdrawal rate exceeds safe withdrawal guidelines. Consider delaying retirement, increasing guaranteed income sources, or reducing expenses.'
+                });
+            } else if (withdrawalRate > 4) {
+                score -= 1;
+                reasons.push(`Withdrawal rate ${withdrawalRate.toFixed(1)}% is above 4% safe threshold`);
+                recommendations.push({
+                    title: 'Implement Bucket Strategy',
+                    description: 'Divide portfolio into 3 buckets: cash (1-2 years expenses), bonds (3-7 years), and stocks (8+ years). This protects against sequence of returns risk.'
+                });
+            } else {
+                score += 2;
+                reasons.push(`Safe withdrawal rate: ${withdrawalRate.toFixed(1)}%`);
+            }
+        }
 
-            <div class="risk-scores-grid">
-                <!-- Tax Risk -->
-                <div class="risk-card" id="tax-risk-card">
-                    <div class="risk-header">
-                        <i class="fas fa-dollar-sign"></i>
-                        <h3>Tax Risk</h3>
-                    </div>
-                    <div class="score-display">
-                        <div class="score-circle" id="tax-score-circle">
-                            <span class="score-number" id="tax-score">--</span>
-                        </div>
-                        <div class="risk-level" id="tax-level">--</div>
-                    </div>
-                    <div class="risk-factors" id="tax-factors"></div>
-                    <div class="recommendations" id="tax-recommendations"></div>
-                </div>
+        // Check guaranteed income coverage
+        if (annualIncome > 0) {
+            const guaranteedPercent = (guaranteedIncome / annualIncome) * 100;
+            
+            if (guaranteedPercent > 80) {
+                score += 2;
+                reasons.push('Over 80% of income from guaranteed sources');
+            } else if (guaranteedPercent < 50) {
+                score -= 2;
+                reasons.push('Less than 50% of income from guaranteed sources');
+                recommendations.push({
+                    title: 'Consider Income Annuity',
+                    description: 'Purchase a deferred income annuity (DIA) or qualified longevity annuity contract (QLAC) to increase guaranteed lifetime income and reduce market dependency.'
+                });
+            }
+        }
 
-                <!-- Market Risk -->
-                <div class="risk-card" id="market-risk-card">
-                    <div class="risk-header">
-                        <i class="fas fa-chart-area"></i>
-                        <h3>Market / Sequence Risk</h3>
-                    </div>
-                    <div class="score-display">
-                        <div class="score-circle" id="market-score-circle">
-                            <span class="score-number" id="market-score">--</span>
-                        </div>
-                        <div class="risk-level" id="market-level">--</div>
-                    </div>
-                    <div class="risk-factors" id="market-factors"></div>
-                    <div class="recommendations" id="market-recommendations"></div>
-                </div>
+        // Check asset allocation
+        const equityPercent = data.market_equityAllocation || 60;
+        const yearsToRetirement = (data.market_plannedRetirementAge || 65) - (data.clientAge || 50);
+        
+        if (yearsToRetirement < 5 && equityPercent > 70) {
+            score -= 2;
+            reasons.push('High equity allocation near retirement');
+            recommendations.push({
+                title: 'Reduce Equity Exposure',
+                description: 'With retirement approaching, gradually shift to a more conservative allocation to protect against market downturns.'
+            });
+        }
 
-                <!-- Inflation Risk -->
-                <div class="risk-card" id="inflation-risk-card">
-                    <div class="risk-header">
-                        <i class="fas fa-fire"></i>
-                        <h3>Inflation Risk</h3>
-                    </div>
-                    <div class="score-display">
-                        <div class="score-circle" id="inflation-score-circle">
-                            <span class="score-number" id="inflation-score">--</span>
-                        </div>
-                        <div class="risk-level" id="inflation-level">--</div>
-                    </div>
-                    <div class="risk-factors" id="inflation-factors"></div>
-                    <div class="recommendations" id="inflation-recommendations"></div>
-                </div>
+        score = Math.max(1, Math.min(10, Math.round(score * 10) / 10));
 
-                <!-- Longevity Risk -->
-                <div class="risk-card" id="longevity-risk-card">
-                    <div class="risk-header">
-                        <i class="fas fa-hourglass-half"></i>
-                        <h3>Longevity Risk</h3>
-                    </div>
-                    <div class="score-display">
-                        <div class="score-circle" id="longevity-score-circle">
-                            <span class="score-number" id="longevity-score">--</span>
-                        </div>
-                        <div class="risk-level" id="longevity-level">--</div>
-                    </div>
-                    <div class="risk-factors" id="longevity-factors"></div>
-                    <div class="recommendations" id="longevity-recommendations"></div>
-                </div>
+        return {
+            score,
+            level: this.getRiskLevel(score),
+            reasons,
+            recommendations: score <= 6 ? recommendations : []
+        };
+    },
 
-                <!-- LTC Risk -->
-                <div class="risk-card" id="ltc-risk-card">
-                    <div class="risk-header">
-                        <i class="fas fa-heartbeat"></i>
-                        <h3>Long-Term Care Risk</h3>
-                    </div>
-                    <div class="score-display">
-                        <div class="score-circle" id="ltc-score-circle">
-                            <span class="score-number" id="ltc-score">--</span>
-                        </div>
-                        <div class="risk-level" id="ltc-level">--</div>
-                    </div>
-                    <div class="risk-factors" id="ltc-factors"></div>
-                    <div class="recommendations" id="ltc-recommendations"></div>
-                </div>
+    /**
+     * Calculate Inflation Risk
+     */
+    calculateInflationRisk(data) {
+        let score = 6; // Start in middle
+        const reasons = [];
+        const recommendations = [];
 
-                <!-- Early Retirement Risk -->
-                <div class="risk-card" id="early-risk-card">
-                    <div class="risk-header">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <h3>Involuntary Early Retirement</h3>
-                    </div>
-                    <div class="score-display">
-                        <div class="score-circle" id="early-score-circle">
-                            <span class="score-number" id="early-score">--</span>
-                        </div>
-                        <div class="risk-level" id="early-level">--</div>
-                    </div>
-                    <div class="risk-factors" id="early-factors"></div>
-                    <div class="recommendations" id="early-recommendations"></div>
-                </div>
-            </div>
+        // Check COLA on pension
+        const hasPensionCOLA = data.inflation_pensionCOLA === 'yes';
+        if (data.hasPension || data.market_pensionIncome > 0) {
+            if (hasPensionCOLA) {
+                score += 2;
+                reasons.push('Pension includes COLA protection');
+            } else {
+                score -= 2;
+                reasons.push('Pension has no COLA – purchasing power will decline');
+                recommendations.push({
+                    title: 'Maintain Growth Allocation',
+                    description: 'Keep at least 60% of your portfolio in equities to outpace inflation over your retirement horizon. Without pension COLA, your portfolio must provide inflation protection.'
+                });
+            }
+        }
 
-            <div class="action-buttons">
-                <button class="btn-secondary" onclick="printResults()"><i class="fas fa-print"></i> Print Results</button>
-                <button class="btn-secondary" onclick="startOver()"><i class="fas fa-redo"></i> Start Over</button>
-            </div>
+        // Check Social Security COLA
+        if (data.hasSocialSecurity || data.market_ssIncome > 0) {
+            score += 1;
+            reasons.push('Social Security includes annual COLA');
+        }
 
-            <div class="disclaimer">
-                <h4><i class="fas fa-info-circle"></i> Important Disclaimer</h4>
-                <p>This tool provides general educational guidance only and is not personalized financial advice. The risk scores and recommendations are based on general principles and may not account for your unique circumstances. Always consult with qualified financial, tax, and legal professionals before making retirement planning decisions. Past performance does not guarantee future results. All investments carry risk.</p>
-            </div>
-        </section>
-    </div>
+        // Check equity allocation
+        const equityPercent = data.market_equityAllocation || 60;
+        if (equityPercent < 40) {
+            score -= 2;
+            reasons.push('Low equity allocation (<40%) limits inflation protection');
+            recommendations.push({
+                title: 'Increase Equity Allocation',
+                description: 'Consider increasing stock allocation to at least 50-60% to maintain purchasing power over a 30+ year retirement.'
+            });
+        } else if (equityPercent >= 60) {
+            score += 1;
+            reasons.push('Adequate equity allocation for inflation protection');
+        }
 
-    <script src="js/script.js"></script>
-</body>
-</html>
+        // Check for inflation-protected securities
+        if (data.inflationProtection) {
+            score += 1;
+            reasons.push('Portfolio includes TIPS or I-Bonds');
+        } else {
+            recommendations.push({
+                title: 'Add Inflation-Protected Securities',
+                description: 'Allocate 10-20% of fixed income to Treasury Inflation-Protected Securities (TIPS) or Series I Savings Bonds to provide inflation hedge.'
+            });
+        }
+
+        // Healthcare inflation
+        const yearsToMedicare = Math.max(0, 65 - (data.clientAge || 50));
+        if (yearsToMedicare > 5 && !data.premedicareCoverage) {
+            score -= 1;
+            reasons.push('No plan for healthcare costs before Medicare');
+            recommendations.push({
+                title: 'Plan for Healthcare Inflation',
+                description: 'Healthcare costs rise 6-8% annually. Budget $1,500-$2,000/month for pre-65 health insurance. Consider HSA contributions to build a tax-free healthcare reserve.'
+            });
+        }
+
+        score = Math.max(1, Math.min(10, Math.round(score * 10) / 10));
+
+        return {
+            score,
+            level: this.getRiskLevel(score),
+            reasons,
+            recommendations: score <= 6 ? recommendations : []
+        };
+    },
+
+    /**
+     * Calculate Longevity Risk
+     */
+    calculateLongevityRisk(data) {
+        let score = 7; // Start optimistic
+        const reasons = [];
+        const recommendations = [];
+
+        // Check guaranteed lifetime income
+        const annualIncome = data.market_annualIncome || 100000;
+        const pensionIncome = data.market_pensionIncome || 0;
+        const ssIncome = data.market_ssIncome || 0;
+        const guaranteedIncome = pensionIncome + ssIncome;
+        
+        if (annualIncome > 0) {
+            const guaranteedPercent = (guaranteedIncome / annualIncome) * 100;
+            
+            if (guaranteedPercent > 80) {
+                score += 2;
+                reasons.push('Over 80% of income guaranteed for life');
+            } else if (guaranteedPercent < 50) {
+                score -= 2;
+                reasons.push('Less than 50% guaranteed lifetime income');
+                recommendations.push({
+                    title: 'Consider Longevity Annuity',
+                    description: 'Purchase a Qualified Longevity Annuity Contract (QLAC) with up to $200,000 of IRA funds. Payments start at age 80-85, protecting against outliving your assets.'
+                });
+            }
+        }
+
+        // Check health status
+        const clientHealth = data.clientHealthStatus || '';
+        const spouseHealth = data.spouseHealthStatus || '';
+        
+        if (clientHealth === 'Excellent' || spouseHealth === 'Excellent') {
+            score -= 1;
+            reasons.push('Excellent health increases longevity planning needs');
+        }
+        if (clientHealth === 'Poor' || spouseHealth === 'Poor') {
+            score += 1;
+            reasons.push('Health issues may reduce longevity risk');
+        }
+
+        // Check family longevity history
+        if (data.familyLongevity === 'long') {
+            score -= 1;
+            reasons.push('Family history of longevity');
+        }
+
+        // Check Social Security claiming strategy
+        const clientSSAge = this.parseSSAge(data.clientSSClaimAge);
+        const spouseSSAge = this.parseSSAge(data.spouseSSClaimAge);
+        
+        if (clientSSAge >= 70 || spouseSSAge >= 70) {
+            score += 1;
+            reasons.push('Maximizing Social Security by delaying to age 70');
+        } else if (clientSSAge < 67 || spouseSSAge < 67) {
+            score -= 1;
+            recommendations.push({
+                title: 'Delay Social Security Claiming',
+                description: 'For every year you delay Social Security past age 62, benefits increase 7-8%. Delaying to 70 provides maximum lifetime income and inflation protection.'
+            });
+        }
+
+        score = Math.max(1, Math.min(10, Math.round(score * 10) / 10));
+
+        return {
+            score,
+            level: this.getRiskLevel(score),
+            reasons,
+            recommendations: score <= 6 ? recommendations : []
+        };
+    },
+
+    /**
+     * Calculate Long-Term Care Risk
+     */
+    calculateLTCRisk(data) {
+        let score = 5; // Start at middle
+        const reasons = [];
+        const recommendations = [];
+
+        // Check LTC insurance
+        const hasClientLTC = data.clientLTCInsurance && 
+                             data.clientLTCInsurance !== 'None' && 
+                             data.clientLTCInsurance !== '-- Select --';
+        const hasSpouseLTC = data.spouseLTCInsurance && 
+                             data.spouseLTCInsurance !== 'None' && 
+                             data.spouseLTCInsurance !== '-- Select --';
+
+        if (hasClientLTC && hasSpouseLTC) {
+            score += 3;
+            reasons.push('Both spouses have LTC insurance coverage');
+        } else if (hasClientLTC || hasSpouseLTC) {
+            score += 1;
+            reasons.push('One spouse has LTC insurance');
+            recommendations.push({
+                title: 'Obtain LTC Coverage for Both Spouses',
+                description: 'The spouse without coverage remains exposed to catastrophic LTC costs. Get quotes for the uncovered spouse immediately.'
+            });
+        } else {
+            score -= 3;
+            reasons.push('No long-term care insurance');
+            recommendations.push({
+                title: 'IUL with Living Benefits – Tax-Free LTC Protection with No Contribution or Income Limits',
+                description: 'An IUL with chronic illness, critical illness, and terminal illness riders provides tax-free access to death benefit for qualifying LTC needs. Unlike traditional LTC insurance (use-it-or-lose-it), premiums build cash value that can be accessed via policy loans or passed to heirs. No income or contribution limits apply, making it ideal for high earners.'
+            });
+        }
+
+        // Check self-insurance capacity
+        const liquidAssets = (data.tax_taxableBalance || 0) + (data.emergencyFundBalance || 0);
+        const retirementAssets = (data.market_portfolioBalance || 0);
+        
+        if (liquidAssets < 200000 && retirementAssets < 1000000 && !hasClientLTC && !hasSpouseLTC) {
+            score -= 2;
+            reasons.push('Insufficient assets to self-insure LTC risk');
+            recommendations.push({
+                title: 'Consider Hybrid Life/LTC Policy',
+                description: 'A hybrid policy combines life insurance with LTC benefits. If you never need care, heirs receive the death benefit. This addresses the "use-it-or-lose-it" concern of traditional LTC insurance.'
+            });
+        } else if (liquidAssets > 500000 || retirementAssets > 2000000) {
+            score += 1;
+            reasons.push('Sufficient assets to partially self-insure LTC costs');
+        }
+
+        // Check family LTC history
+        const hasFamilyDementia = data.familyDementia && 
+                                  data.familyDementia !== 'No known history' &&
+                                  data.familyDementia !== '-- Select --';
+        
+        if (hasFamilyDementia) {
+            score -= 2;
+            reasons.push('Family history of dementia/Alzheimer\'s increases LTC probability');
+            recommendations.push({
+                title: 'Obtain LTC Insurance Immediately',
+                description: 'Family history of dementia significantly increases your LTC need probability. Get quotes before a diagnosis makes coverage unavailable or unaffordable.'
+            });
+        }
+
+        // Age consideration
+        const clientAge = data.clientAge || 50;
+        if (clientAge < 50 && !hasClientLTC) {
+            recommendations.push({
+                title: 'Lock in LTC Insurance at Current Age',
+                description: `At age ${clientAge}, premiums are relatively affordable and underwriting is easier. Every year you wait increases cost and reduces insurability.`
+            });
+        } else if (clientAge > 65 && !hasClientLTC) {
+            score -= 1;
+            reasons.push('Over age 65 without LTC coverage – premiums will be very high');
+        }
+
+        score = Math.max(1, Math.min(10, Math.round(score * 10) / 10));
+
+        return {
+            score,
+            level: this.getRiskLevel(score),
+            reasons,
+            recommendations: score <= 6 ? recommendations : []
+        };
+    },
+
+    /**
+     * Calculate Involuntary Early Retirement Risk
+     */
+    calculateEarlyRetirementRisk(data) {
+        let score = 6; // Start in middle
+        const reasons = [];
+        const recommendations = [];
+
+        // Check disability insurance
+        const hasClientDisability = data.clientDisabilityInsurance && 
+                                    data.clientDisabilityInsurance !== 'None / No coverage' &&
+                                    data.clientDisabilityInsurance !== '-- Select --';
+        const hasSpouseDisability = data.spouseDisabilityInsurance && 
+                                    data.spouseDisabilityInsurance !== 'None / No coverage' &&
+                                    data.spouseDisabilityInsurance !== '-- Select --';
+
+        if (hasClientDisability && hasSpouseDisability) {
+            score += 2;
+            reasons.push('Both spouses have disability insurance');
+        } else if (!hasClientDisability && !hasSpouseDisability) {
+            score -= 3;
+            reasons.push('No disability insurance for either spouse');
+            recommendations.push({
+                title: 'Obtain Individual Disability Insurance Immediately',
+                description: 'Disability insurance replaces 60-70% of income if you cannot work. Get "own-occupation" coverage with benefit periods to age 65 or lifetime.'
+            });
+        } else {
+            score += 1;
+            recommendations.push({
+                title: 'Obtain Disability Coverage for Both Spouses',
+                description: 'The uninsured spouse remains vulnerable to income loss from disability. Get quotes immediately while both are still insurable.'
+            });
+        }
+
+        // Check emergency fund
+        const emergencyFund = data.emergencyFundBalance || 0;
+        const monthlyExpenses = ((data.market_annualIncome || 100000) / 12);
+        const monthsCovered = monthlyExpenses > 0 ? emergencyFund / monthlyExpenses : 0;
+
+        if (monthsCovered >= 6) {
+            score += 2;
+            reasons.push(`Emergency fund covers ${monthsCovered.toFixed(1)} months of expenses`);
+        } else if (monthsCovered >= 3) {
+            score += 1;
+            reasons.push(`Emergency fund covers ${monthsCovered.toFixed(1)} months`);
+        } else {
+            score -= 2;
+            reasons.push('Insufficient emergency fund (< 3 months expenses)');
+            recommendations.push({
+                title: 'Build 6-12 Month Emergency Fund',
+                description: `Save ${(monthlyExpenses * 6).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} to ${(monthlyExpenses * 12).toLocaleString('en-US', {style: 'currency', currency: 'USD'})} in a liquid savings account. This cushion prevents forced early retirement from becoming a financial crisis.`
+            });
+        }
+
+        // Check years to retirement
+        const clientAge = data.clientAge || 50;
+        const plannedRetirementAge = data.market_plannedRetirementAge || 65;
+        const yearsToRetirement = plannedRetirementAge - clientAge;
+
+        if (yearsToRetirement > 15) {
+            score -= 1;
+            reasons.push(`${yearsToRetirement} years until planned retirement`);
+        } else if (yearsToRetirement < 5) {
+            score += 2;
+            reasons.push('Close to planned retirement age');
+        }
+
+        // IUL with Critical Care Rider
+        const hasLifeInsurance = data.clientLifeType && 
+                                 data.clientLifeType !== 'None' &&
+                                 data.clientLifeType !== '-- Select --';
+        const hasLivingBenefits = data.clientLivingBenefits === 'Yes' || 
+                                  data.spouseLivingBenefits === 'Yes';
+
+        if (!hasLivingBenefits) {
+            recommendations.push({
+                title: 'Whole Life or IUL with Critical Care Rider – Protection Against Health-Forced Early Retirement',
+                description: '46% of people who retire earlier than planned cite health problems or disabilities (EBRI). A critical care/critical illness rider pays a tax-free lump sum (typically 25-50% of death benefit) upon diagnosis of qualifying conditions like heart attack, stroke, cancer, or organ failure. This benefit provides immediate income replacement if a health crisis forces early retirement, protecting your retirement timeline. Cash value serves as emergency fund via policy loans. No income or contribution limits.'
+            });
+        }
+
+        // Health status check
+        const clientHealth = data.clientHealthStatus || '';
+        const spouseHealth = data.spouseHealthStatus || '';
+        
+        if (clientHealth === 'Fair' || clientHealth === 'Poor' || 
+            spouseHealth === 'Fair' || spouseHealth === 'Poor') {
+            score -= 2;
+            reasons.push('Current health issues increase early retirement risk');
+            recommendations.push({
+                title: 'Model Forced Early Retirement Scenarios',
+                description: 'Run financial projections assuming retirement at ages 55, 57, 60, 62 to identify gaps. Determine how much you need in liquid reserves to bridge to Social Security and pension eligibility.'
+            });
+        }
+
+        score = Math.max(1, Math.min(10, Math.round(score * 10) / 10));
+
+        return {
+            score,
+            level: this.getRiskLevel(score),
+            reasons,
+            recommendations: score <= 6 ? recommendations : []
+        };
+    },
+
+    /**
+     * Calculate overall risk score (weighted average)
+     */
+    calculateOverallScore(scores) {
+        const weights = {
+            tax: 0.15,
+            market: 0.20,
+            inflation: 0.15,
+            longevity: 0.15,
+            ltc: 0.20,
+            earlyRetirement: 0.15
+        };
+
+        let weightedSum = 0;
+        let totalWeight = 0;
+
+        for (const [category, weight] of Object.entries(weights)) {
+            if (scores[category] && scores[category].score) {
+                weightedSum += scores[category].score * weight;
+                totalWeight += weight;
+            }
+        }
+
+        const overallScore = totalWeight > 0 ? weightedSum / totalWeight : 5;
+        return Math.round(overallScore * 10) / 10;
+    },
+
+    /**
+     * Determine risk level from numeric score
+     */
+    getRiskLevel(score) {
+        if (score <= 3) return 'High Risk';
+        if (score <= 6) return 'Moderate Risk';
+        return 'Low Risk';
+    },
+
+    /**
+     * Get color for risk level
+     */
+    getRiskColor(level) {
+        const colors = {
+            'High Risk': '#ef4444',
+            'Moderate Risk': '#f59e0b',
+            'Low Risk': '#10b981'
+        };
+        return colors[level] || '#6b7280';
+    },
+
+    /**
+     * Parse Social Security claiming age from string
+     */
+    parseSSAge(ageString) {
+        if (!ageString) return 67; // Default to FRA
+        const match = ageString.match(/\d+/);
+        return match ? parseInt(match[0]) : 67;
+    }
+};
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = RiskScorer;
+}
