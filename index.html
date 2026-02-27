@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetireSecure™ - Retirement Portfolio Risk Analyzer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <section id="welcome-screen" class="screen active">
+            <div class="welcome-content">
+                <i class="fas fa-chart-line welcome-icon"></i>
+                <h1>RetireSecure™</h1>
+                <h2>Retirement Portfolio Risk Analyzer</h2>
+                <p class="subtitle">Comprehensive Risk Assessment Across 6 Critical Categories</p>
+                
+                <div class="risk-categories">
+                    <div class="category-badge"><i class="fas fa-dollar-sign"></i> Tax Risk</div>
+                    <div class="category-badge"><i class="fas fa-chart-area"></i> Market Risk</div>
+                    <div class="category-badge"><i class="fas fa-fire"></i> Inflation Risk</div>
+                    <div class="category-badge"><i class="fas fa-hourglass-half"></i> Longevity Risk</div>
+                    <div class="category-badge"><i class="fas fa-heartbeat"></i> Long-Term Care</div>
+                    <div class="category-badge"><i class="fas fa-exclamation-triangle"></i> Early Retirement</div>
+                </div>
+
+                <button class="btn-primary" onclick="startAssessment()">Start Assessment</button>
+                
+                <p class="disclaimer-small">All calculations are performed locally in your browser. No data is transmitted or stored.</p>
+            </div>
+        </section>
+
+        <!-- Assessment Form -->
+        <section id="assessment-form" class="screen">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            
+            <form id="risk-form">
+                <!-- Personal Information -->
+                <div class="form-section active" data-section="1">
+                    <h2><i class="fas fa-user"></i> Personal Information</h2>
+                    
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="age">Current Age</label>
+                            <input type="number" id="age" name="age" min="18" max="100" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="retirement-age">Planned Retirement Age</label>
+                            <input type="number" id="retirement-age" name="retirement-age" min="50" max="80" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="annual-income">Current Annual Income</label>
+                        <input type="number" id="annual-income" name="annual-income" min="0" step="1000" required>
+                        <small>Enter your gross annual household income</small>
+                    </div>
+                    
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" onclick="nextSection()" style="margin-left: auto;">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Tax Risk Section -->
+                <div class="form-section" data-section="2">
+                    <h2><i class="fas fa-dollar-sign"></i> Tax Risk Assessment</h2>
+                    <p class="section-description">Understanding your tax diversification and future tax exposure</p>
+                    
+                    <div class="form-group">
+                        <label for="tax-deferred-pct">% of retirement assets in tax-deferred accounts (Traditional 401k/IRA)</label>
+                        <input type="number" id="tax-deferred-pct" name="tax-deferred-pct" min="0" max="100" step="1" required>
+                        <small>These accounts are taxed as ordinary income when withdrawn</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="roth-pct">% of retirement assets in tax-free accounts (Roth 401k/IRA)</label>
+                        <input type="number" id="roth-pct" name="roth-pct" min="0" max="100" step="1" required>
+                        <small>Qualified Roth withdrawals are completely tax-free</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taxable-pct">% of retirement assets in taxable brokerage accounts</label>
+                        <input type="number" id="taxable-pct" name="taxable-pct" min="0" max="100" step="1" required>
+                        <small>These provide flexibility and favorable capital gains treatment</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="retirement-income">Expected annual retirement income (from all sources)</label>
+                        <input type="number" id="retirement-income" name="retirement-income" min="0" step="1000" required>
+                        <small>Include pension, Social Security, investment income, rental income, etc.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="state-tax">Does your state tax retirement income?</label>
+                        <select id="state-tax" name="state-tax" required>
+                            <option value="">-- Select --</option>
+                            <option value="no">No (or minimal)</option>
+                            <option value="partial">Partially (some exemptions)</option>
+                            <option value="yes">Yes (fully taxed)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="social-security">Do you expect to receive Social Security benefits?</label>
+                        <select id="social-security" name="social-security" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                            <option value="unknown">Unknown</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pension">Do you have a pension?</label>
+                        <select id="pension" name="pension" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="roth-conversion">Have you done Roth conversion planning?</label>
+                        <select id="roth-conversion" name="roth-conversion" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes">Yes, active plan</option>
+                            <option value="somewhat">Somewhat/Considering</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Market/Sequence Risk Section -->
+                <div class="form-section" data-section="3">
+                    <h2><i class="fas fa-chart-area"></i> Market / Sequence of Returns Risk</h2>
+                    <p class="section-description">Assessing your vulnerability to market downturns</p>
+                    
+                    <div class="form-group">
+                        <label for="stocks-pct">% of portfolio in stocks/equities</label>
+                        <input type="number" id="stocks-pct" name="stocks-pct" min="0" max="100" step="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bonds-pct">% of portfolio in bonds/fixed income</label>
+                        <input type="number" id="bonds-pct" name="bonds-pct" min="0" max="100" step="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cash-pct">% of portfolio in cash/money market</label>
+                        <input type="number" id="cash-pct" name="cash-pct" min="0" max="100" step="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="withdrawal-rate">Expected annual withdrawal rate in retirement (%)</label>
+                        <input type="number" id="withdrawal-rate" name="withdrawal-rate" min="0" max="20" step="0.1" required>
+                        <small>Typical sustainable rate is 3-4% per year</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="guaranteed-income-pct">% of retirement expenses covered by guaranteed income (pension, SS, annuities)</label>
+                        <input type="number" id="guaranteed-income-pct" name="guaranteed-income-pct" min="0" max="100" step="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cash-buffer">Do you have a cash buffer (2-3 years of expenses)?</label>
+                        <select id="cash-buffer" name="cash-buffer" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes-3">Yes, 3+ years</option>
+                            <option value="yes-2">Yes, 2 years</option>
+                            <option value="yes-1">Yes, 1 year</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="stress-tested">Have you stress-tested your portfolio for market downturns?</label>
+                        <select id="stress-tested" name="stress-tested" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes">Yes, with advisor</option>
+                            <option value="somewhat">Somewhat</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Inflation Risk Section -->
+                <div class="form-section" data-section="4">
+                    <h2><i class="fas fa-fire"></i> Inflation Risk Assessment</h2>
+                    <p class="section-description">Evaluating your protection against rising costs</p>
+                    
+                    <div class="form-group">
+                        <label for="fixed-income-sources-pct">% of retirement income from fixed sources (pension without COLA, fixed annuities)</label>
+                        <input type="number" id="fixed-income-sources-pct" name="fixed-income-sources-pct" min="0" max="100" step="1" required>
+                        <small>Fixed income loses purchasing power over time</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ss-cola">Does your Social Security or pension have COLA (cost of living adjustment)?</label>
+                        <select id="ss-cola" name="ss-cola" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes-both">Yes, both have COLA</option>
+                            <option value="yes-one">Yes, one has COLA</option>
+                            <option value="no">No COLA</option>
+                            <option value="no-ss-pension">No SS or pension</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="growth-assets-pct">% of portfolio in growth assets (stocks, real estate, commodities)</label>
+                        <input type="number" id="growth-assets-pct" name="growth-assets-pct" min="0" max="100" step="1" required>
+                        <small>Growth assets historically outpace inflation</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="real-estate">Do you own real estate (beyond primary home)?</label>
+                        <select id="real-estate" name="real-estate" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes-income">Yes, rental income property</option>
+                            <option value="yes-no-income">Yes, but no rental income</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inflation-plan">Do you have a specific plan to address inflation in retirement?</label>
+                        <select id="inflation-plan" name="inflation-plan" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes">Yes, detailed plan</option>
+                            <option value="somewhat">Somewhat considered</option>
+                            <option value="no">No specific plan</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Longevity Risk Section -->
+                <div class="form-section" data-section="5">
+                    <h2><i class="fas fa-hourglass-half"></i> Longevity Risk Assessment</h2>
+                    <p class="section-description">Ensuring your money lasts as long as you do</p>
+                    
+                    <div class="form-group">
+                        <label for="health-status">Overall health status</label>
+                        <select id="health-status" name="health-status" required>
+                            <option value="">-- Select --</option>
+                            <option value="excellent">Excellent</option>
+                            <option value="good">Good</option>
+                            <option value="fair">Fair</option>
+                            <option value="poor">Poor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="family-longevity">Family history of longevity</label>
+                        <select id="family-longevity" name="family-longevity" required>
+                            <option value="">-- Select --</option>
+                            <option value="long">Above average (many relatives lived 85+)</option>
+                            <option value="average">Average (most lived 70-85)</option>
+                            <option value="short">Below average (most lived under 70)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="portfolio-withdrawal-rate">Projected portfolio withdrawal rate (%)</label>
+                        <input type="number" id="portfolio-withdrawal-rate" name="portfolio-withdrawal-rate" min="0" max="20" step="0.1" required>
+                        <small>Higher rates increase risk of running out of money</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lifetime-income-pct">% of expenses covered by guaranteed lifetime income (SS, pension, annuities)</label>
+                        <input type="number" id="lifetime-income-pct" name="lifetime-income-pct" min="0" max="100" step="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="income-calculator">Have you used a retirement income calculator to project sustainability?</label>
+                        <select id="income-calculator" name="income-calculator" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes">Yes, with financial advisor</option>
+                            <option value="somewhat">Yes, used online tools</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Long-Term Care Risk Section -->
+                <div class="form-section" data-section="6">
+                    <h2><i class="fas fa-heartbeat"></i> Long-Term Care Risk</h2>
+                    <p class="section-description">Planning for potential healthcare needs</p>
+                    
+                    <div class="form-group">
+                        <label for="ltc-insurance">Do you have long-term care insurance?</label>
+                        <select id="ltc-insurance" name="ltc-insurance" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes-comprehensive">Yes, comprehensive coverage</option>
+                            <option value="yes-basic">Yes, basic coverage</option>
+                            <option value="hybrid">Hybrid life/LTC policy</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="net-worth">Estimated net worth (excluding primary residence)</label>
+                        <select id="net-worth" name="net-worth" required>
+                            <option value="">-- Select --</option>
+                            <option value="under-250k">Under $250,000</option>
+                            <option value="250k-500k">$250,000 - $500,000</option>
+                            <option value="500k-1m">$500,000 - $1,000,000</option>
+                            <option value="1m-2m">$1,000,000 - $2,000,000</option>
+                            <option value="over-2m">Over $2,000,000</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ltc-health">Current health relative to LTC risk</label>
+                        <select id="ltc-health" name="ltc-health" required>
+                            <option value="">-- Select --</option>
+                            <option value="excellent">Excellent health, active lifestyle</option>
+                            <option value="good">Good health, some minor issues</option>
+                            <option value="fair">Fair health, chronic conditions</option>
+                            <option value="poor">Poor health, mobility issues</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="family-support">Family/support system for potential care</label>
+                        <select id="family-support" name="family-support" required>
+                            <option value="">-- Select --</option>
+                            <option value="strong">Strong (spouse/children nearby)</option>
+                            <option value="moderate">Moderate (some family available)</option>
+                            <option value="limited">Limited (far away or unable)</option>
+                            <option value="none">None (no family support)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ltc-plan">Do you have a written long-term care plan?</label>
+                        <select id="ltc-plan" name="ltc-plan" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes">Yes, documented plan</option>
+                            <option value="discussed">Discussed with family</option>
+                            <option value="no">No plan yet</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-secondary" onclick="nextSection()">Next <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Involuntary Early Retirement Risk Section -->
+                <div class="form-section" data-section="7">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Involuntary Early Retirement Risk</h2>
+                    <p class="section-description">Assessing your preparedness for unexpected job loss</p>
+                    
+                    <div class="form-group">
+                        <label for="job-stability">Job/income stability</label>
+                        <select id="job-stability" name="job-stability" required>
+                            <option value="">-- Select --</option>
+                            <option value="very-stable">Very stable (government, tenured, etc.)</option>
+                            <option value="stable">Stable (established career/company)</option>
+                            <option value="moderate">Moderate (some uncertainty)</option>
+                            <option value="unstable">Unstable (volatile industry/position)</option>
+                            <option value="retired">Already retired</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="years-to-retirement">Years until planned retirement</label>
+                        <input type="number" id="years-to-retirement" name="years-to-retirement" min="0" max="50" step="1" required>
+                        <small>This field auto-calculates from your age inputs</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="emergency-fund">Emergency fund (months of expenses)</label>
+                        <select id="emergency-fund" name="emergency-fund" required>
+                            <option value="">-- Select --</option>
+                            <option value="12-plus">12+ months</option>
+                            <option value="6-12">6-12 months</option>
+                            <option value="3-6">3-6 months</option>
+                            <option value="under-3">Under 3 months</option>
+                            <option value="none">No emergency fund</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="disability-insurance">Do you have disability insurance?</label>
+                        <select id="disability-insurance" name="disability-insurance" required>
+                            <option value="">-- Select --</option>
+                            <option value="yes-comprehensive">Yes, comprehensive coverage (60%+ income)</option>
+                            <option value="yes-basic">Yes, basic coverage (under 60% income)</option>
+                            <option value="employer-only">Employer coverage only</option>
+                            <option value="no">No disability insurance</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="early-retirement-health">Health status relative to job demands</label>
+                        <select id="early-retirement-health" name="early-retirement-health" required>
+                            <option value="">-- Select --</option>
+                            <option value="excellent">Excellent, no concerns</option>
+                            <option value="good">Good, can continue working</option>
+                            <option value="fair">Fair, job is challenging</option>
+                            <option value="poor">Poor, job is very difficult</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ready-today">If forced to retire today, how prepared would you be?</label>
+                        <select id="ready-today" name="ready-today" required>
+                            <option value="">-- Select --</option>
+                            <option value="ready">Fully prepared, could retire comfortably</option>
+                            <option value="mostly">Mostly prepared, could manage</option>
+                            <option value="somewhat">Somewhat prepared, would struggle</option>
+                            <option value="not">Not prepared at all</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-navigation">
+                        <button type="button" class="btn-secondary" onclick="prevSection()"><i class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-primary" onclick="calculateResults()">Calculate Risk Scores <i class="fas fa-calculator"></i></button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Results Screen -->
+        <section id="results-screen" class="screen">
+            <div class="results-header">
+                <h1><i class="fas fa-check-circle"></i> Your Retirement Risk Analysis</h1>
+                <p class="results-name" id="results-name"></p>
+            </div>
+
+            <div class="overall-score-card">
+                <h2>Overall Risk Score</h2>
+                <div class="overall-score" id="overall-score">--</div>
+                <p class="overall-description" id="overall-description"></p>
+            </div>
+
+            <div class="risk-scores-grid">
+                <!-- Tax Risk -->
+                <div class="risk-card" id="tax-risk-card">
+                    <div class="risk-header">
+                        <i class="fas fa-dollar-sign"></i>
+                        <h3>Tax Risk</h3>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle" id="tax-score-circle">
+                            <span class="score-number" id="tax-score">--</span>
+                        </div>
+                        <div class="risk-level" id="tax-level">--</div>
+                    </div>
+                    <div class="risk-factors" id="tax-factors"></div>
+                    <div class="recommendations" id="tax-recommendations"></div>
+                </div>
+
+                <!-- Market Risk -->
+                <div class="risk-card" id="market-risk-card">
+                    <div class="risk-header">
+                        <i class="fas fa-chart-area"></i>
+                        <h3>Market / Sequence Risk</h3>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle" id="market-score-circle">
+                            <span class="score-number" id="market-score">--</span>
+                        </div>
+                        <div class="risk-level" id="market-level">--</div>
+                    </div>
+                    <div class="risk-factors" id="market-factors"></div>
+                    <div class="recommendations" id="market-recommendations"></div>
+                </div>
+
+                <!-- Inflation Risk -->
+                <div class="risk-card" id="inflation-risk-card">
+                    <div class="risk-header">
+                        <i class="fas fa-fire"></i>
+                        <h3>Inflation Risk</h3>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle" id="inflation-score-circle">
+                            <span class="score-number" id="inflation-score">--</span>
+                        </div>
+                        <div class="risk-level" id="inflation-level">--</div>
+                    </div>
+                    <div class="risk-factors" id="inflation-factors"></div>
+                    <div class="recommendations" id="inflation-recommendations"></div>
+                </div>
+
+                <!-- Longevity Risk -->
+                <div class="risk-card" id="longevity-risk-card">
+                    <div class="risk-header">
+                        <i class="fas fa-hourglass-half"></i>
+                        <h3>Longevity Risk</h3>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle" id="longevity-score-circle">
+                            <span class="score-number" id="longevity-score">--</span>
+                        </div>
+                        <div class="risk-level" id="longevity-level">--</div>
+                    </div>
+                    <div class="risk-factors" id="longevity-factors"></div>
+                    <div class="recommendations" id="longevity-recommendations"></div>
+                </div>
+
+                <!-- LTC Risk -->
+                <div class="risk-card" id="ltc-risk-card">
+                    <div class="risk-header">
+                        <i class="fas fa-heartbeat"></i>
+                        <h3>Long-Term Care Risk</h3>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle" id="ltc-score-circle">
+                            <span class="score-number" id="ltc-score">--</span>
+                        </div>
+                        <div class="risk-level" id="ltc-level">--</div>
+                    </div>
+                    <div class="risk-factors" id="ltc-factors"></div>
+                    <div class="recommendations" id="ltc-recommendations"></div>
+                </div>
+
+                <!-- Early Retirement Risk -->
+                <div class="risk-card" id="early-risk-card">
+                    <div class="risk-header">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Involuntary Early Retirement</h3>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle" id="early-score-circle">
+                            <span class="score-number" id="early-score">--</span>
+                        </div>
+                        <div class="risk-level" id="early-level">--</div>
+                    </div>
+                    <div class="risk-factors" id="early-factors"></div>
+                    <div class="recommendations" id="early-recommendations"></div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-secondary" onclick="printResults()"><i class="fas fa-print"></i> Print Results</button>
+                <button class="btn-secondary" onclick="startOver()"><i class="fas fa-redo"></i> Start Over</button>
+            </div>
+
+            <div class="disclaimer">
+                <h4><i class="fas fa-info-circle"></i> Important Disclaimer</h4>
+                <p>This tool provides general educational guidance only and is not personalized financial advice. The risk scores and recommendations are based on general principles and may not account for your unique circumstances. Always consult with qualified financial, tax, and legal professionals before making retirement planning decisions. Past performance does not guarantee future results. All investments carry risk.</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
